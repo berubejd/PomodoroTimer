@@ -1,84 +1,14 @@
+#!/usr/bin/env python3.8
+
 import argparse
 import time
 
-def progress_bar(progress: int, length: int = 20, msg_prefix: str = '', msg_complete: str = 'Complete!', complete: int = 100, suppress_nl: bool = False) -> None:
-    """Display a progress bar with optional messaging
-    
-       The only required parameter is 'progress' which should represent a percentage between 0 and 100.
-       
-       By setting 'complete' to zero it is possible to work as a countdown timer, as well.
-       
-       Examples:
-       
-       for i in range(11):
-           progress_bar(i*10, 20)
-           time.sleep(1)
+from progressbar import progress_bar
 
-       for i in range(10, -1, -1):
-           progress_bar(progress=i*10, length=20, complete=0, msg_complete='Time is up!')
-           time.sleep(1)
-
-        for i in range(11):
-           progress_bar(i*10, 20, msg_prefix=f'Timer 3 ({i*10:3}):')
-           time.sleep(1)
-       
-    """
-    
-    FILL_CHAR = '#'
-    BLANK_CHAR = ' '
-
-    if progress < 0 or progress > 100:
-        raise ValueError('Progress must be a value between 0 and 100')
-
-    if len(msg_complete) > length:
-        raise ValueError('Message must be shorter than progress bar length!')
-
-    if progress != complete:
-        progress_length = int(progress / 100 * length)
-        fill = '#' * progress_length + BLANK_CHAR * (length - progress_length)
-        line_term = ''
-    else:
-        padding = BLANK_CHAR * int((length - len(msg_complete)) / 2)
-        fill = padding + msg_complete + padding
-
-        if len(fill) < length:
-            fill = fill + BLANK_CHAR
-
-        if suppress_nl:
-            line_term = ''
-        else:
-            line_term = '\n'
-
-    print(f'\r{msg_prefix} [ {fill} ] {int(progress):3}% ', end=line_term, flush=True)
-
-
-def test_input(suppress: bool = False) -> None:
-    response = input("\aPress ENTER to continue or type 'Quit' to exit... ")
-
-    if response.lower() == 'quit':
-        exit()
-
-    if not suppress:
-        print()
-
-def timer(seconds: int, prefix: str, suppress: bool) -> None:
-    remaining = seconds
-
-    while True:
-        progress = remaining / seconds * 100
-            
-        progress_bar(progress=progress, length=20, complete=0, msg_complete='Time is up!', msg_prefix=prefix + f' ({time.strftime("%M:%S", time.gmtime(remaining))} remaining): ', suppress_nl=suppress)
-        time.sleep(1)
-            
-        remaining -= 1
-
-        if remaining < 0:
-            break
-
-def main() -> None:
+def setup_arguments():
     # Setup command line argument parsing
     parser = argparse.ArgumentParser()
-    parser.version = '1.0'
+    parser.version = '1.1'
 
     parser.add_argument('-n', '--name', action='store', type=str, default='My Pomodoro Task', metavar='text', help="The name to assign to this task")
     parser.add_argument('-p', '--pomodoro', action='store', type=int, default=25, metavar='minutes', help="The length of each pomodoro in minutes")
@@ -96,6 +26,45 @@ def main() -> None:
         args.short_break_duration = .1
         args.long_break_duration = .2
 
+    return args
+
+def test_input(suppress: bool = False) -> None:
+    """ Simple function to draw the users attention and request input in order to continue or quit.
+        Set 'suppress' in order to keep from adding an additional line after input.
+    """
+    response = input("\aPress ENTER to continue or type 'Quit' to exit... ")
+
+    if response.lower() == 'quit':
+        exit()
+
+    if not suppress:
+        print()
+
+def timer(seconds: int, prefix: str) -> None:
+    """ Simplify usage of progress_bar since many of the options are going to be the same throughout"""
+    remaining = seconds
+
+    while True:
+        progress = remaining / seconds * 100
+            
+        progress_bar(progress = progress, length = 20, complete = 0, msg_complete = 'Time is up!', msg_prefix = prefix + f' ({time.strftime("%M:%S", time.gmtime(remaining))} remaining): ', suppress_nl = True)
+        time.sleep(1)
+            
+        remaining -= 1
+
+        if remaining < 0:
+            break
+
+def schedule_break(break_type: str, break_duration: int) -> None:
+    """Schedule a 'short' or 'long' break for a set number of minutes"""
+    test_input() if break_type == 'long' else test_input(True)
+
+    duration = break_duration * 60
+    prefix = f"{break_type.capitalize()} Break{' ' if break_type == 'long' else ''}"
+
+    timer(duration, prefix)
+
+def display_header(args) -> None:
     # Output to user the parameters for the coming Pomodoro Timer
     print()
     print(f'{args.name}')
@@ -105,36 +74,27 @@ def main() -> None:
 
     test_input()
 
+def main(args) -> None:
+    # Display initial message
+    display_header(args)
+
     # Start the timer process
     for count, interval in enumerate(range(1, args.count + 1), 1):
 
         # Set up and generate the Pomodoro timer
         duration = args.pomodoro * 60
         prefix = f'Pomodoro {count} '
-        suppress = True
 
-        timer(duration, prefix, suppress)
+        timer(duration, prefix)
 
         if not count == args.count:
 
             if interval % 4 == 0:
                 # Time for long break
-                test_input()
-
-                duration = args.long_break_duration * 60
-                prefix = f'Long Break '
-                suppress = True
-
-                timer(duration, prefix, suppress)
+                schedule_break('long', args.long_break_duration)
             else:
                 # Time for short break
-                test_input(True)
-
-                duration = args.short_break_duration * 60
-                prefix = f'Short Break'
-                suppress = True
-
-                timer(duration, prefix, suppress)
+                schedule_break('short', args.short_break_duration)
 
             # Alert that it is time for the next pomodoro
             print('\a', end='')
@@ -143,4 +103,5 @@ def main() -> None:
             print(f'\a\n\nCongratulations!  You have just completed the "{args.name}" pomodoro!\n')
 
 if __name__ == '__main__':
-    main()
+    args = setup_arguments()
+    main(args)
