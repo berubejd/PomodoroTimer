@@ -28,7 +28,7 @@ def setup_arguments():
 
     return args
 
-def test_input(suppress: bool = False) -> None:
+def wait_input(suppress: bool = False) -> None:
     """ Simple function to draw the users attention and request input in order to continue or quit.
         Set 'suppress' in order to keep from adding an additional line after input.
     """
@@ -57,7 +57,7 @@ def timer(seconds: int, prefix: str) -> None:
 
 def schedule_break(break_type: str, break_duration: int) -> None:
     """Schedule a 'short' or 'long' break for a set number of minutes"""
-    test_input() if break_type == 'long' else test_input(True)
+    wait_input() if break_type == 'long' else test_input(True)
 
     duration = break_duration * 60
     prefix = f"{break_type.capitalize()} Break{' ' if break_type == 'long' else ''}"
@@ -72,7 +72,7 @@ def display_header(args) -> None:
     print(f'Starting "{args.name}" with {args.count} pomodoros of {args.pomodoro} minutes each.  There will be a {args.short_break_duration} minute break between each pomodoro and a {args.long_break_duration} minute break after every 4 pomodoros.')
     print()
 
-    test_input()
+    wait_input()
 
 def main(args) -> None:
     # Display initial message
