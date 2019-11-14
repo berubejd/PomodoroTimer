@@ -1,8 +1,8 @@
+#!/usr/bin/env python3.8
+
 def progress_bar(progress: int, length: int = 20, msg_prefix: str = '', msg_complete: str = 'Complete!', complete: int = 100, suppress_nl: bool = False) -> None:
     """Display a progress bar with optional messaging
-    
-       The only required parameter is 'progress' which should represent a percentage between 0 and 100.
-       
+       The only required parameter is 'progress' which should represent a percentage expressed as am integer between 0 and 100.
        By setting 'complete' to zero it is possible to work as a countdown timer, as well.
        
        Examples:
@@ -32,21 +32,15 @@ def progress_bar(progress: int, length: int = 20, msg_prefix: str = '', msg_comp
 
     if progress != complete:
         progress_length = int(progress / 100 * length)
-        fill = '#' * progress_length + BLANK_CHAR * (length - progress_length)
+        fill = '#' * progress_length
         line_term = ''
     else:
-        padding = BLANK_CHAR * int((length - len(msg_complete)) / 2)
-        fill = padding + msg_complete + padding
+        fill = msg_complete
+        length = f'^{length}'
 
-        if len(fill) < length:
-            fill = fill + BLANK_CHAR
+        line_term = '' if suppress_nl else '\n'
 
-        if suppress_nl:
-            line_term = ''
-        else:
-            line_term = '\n'
-
-    print(f'\r{msg_prefix} [ {fill} ] {int(progress):3}% ', end=line_term, flush=True)
+    print(f'\r{msg_prefix} [ {fill:{length}} ] {int(progress):3}% ', end = line_term, flush = True)
 
 if __name__ == '__main__':
-    pass
+    progress_bar(progress=40, length=20, complete=100, msg_complete='Time is up!')
