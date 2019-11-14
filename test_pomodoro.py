@@ -28,7 +28,6 @@ def test_wait_input(inp):
 @patch('pomodoro.progress_bar', autospec=True)
 def test_timer(prg, slp):
     timer(2, 'test')
-    #print(prg.mock_calls[0][2]['progress'])
     assert prg.mock_calls[0][2]['progress'] == 100
     assert prg.mock_calls[1][2]['progress'] == 50
     assert prg.mock_calls[2][2]['progress'] == 0
